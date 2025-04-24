@@ -22,6 +22,8 @@ import Investments from "@/pages/user/Investments";
 // Admin Pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminPackages from "@/pages/admin/AdminPackages";
+import AdminSupport from "@/pages/admin/AdminSupport";
 
 // Other Pages
 import NotFound from "@/pages/NotFound";
@@ -73,10 +75,8 @@ const App = () => (
               >
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/packages" element={<div>Admin Packages Page</div>} />
-                <Route path="/admin/transactions" element={<div>Admin Transactions Page</div>} />
-                <Route path="/admin/referrals" element={<div>Admin Referrals Page</div>} />
-                <Route path="/admin/support" element={<div>Admin Support Page</div>} />
+                <Route path="/admin/packages" element={<AdminPackages />} />
+                <Route path="/admin/support" element={<AdminSupport />} />
                 <Route path="/admin/content" element={<div>Admin Content Page</div>} />
                 <Route path="/admin/settings" element={<div>Admin Settings Page</div>} />
                 <Route path="/admin/advanced" element={<div>Admin Advanced Page</div>} />
