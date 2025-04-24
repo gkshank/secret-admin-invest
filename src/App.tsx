@@ -17,9 +17,11 @@ import Register from "@/pages/Register";
 
 // User Pages
 import Dashboard from "@/pages/user/Dashboard";
+import Investments from "@/pages/user/Investments";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminUsers from "@/pages/admin/AdminUsers";
 
 // Other Pages
 import NotFound from "@/pages/NotFound";
@@ -51,7 +53,7 @@ const App = () => (
                 }
               >
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/investments" element={<div>Investments Page</div>} />
+                <Route path="/investments" element={<Investments />} />
                 <Route path="/transactions" element={<div>Transactions Page</div>} />
                 <Route path="/referrals" element={<div>Referrals Page</div>} />
                 <Route path="/notifications" element={<div>Notifications Page</div>} />
@@ -70,7 +72,7 @@ const App = () => (
                 }
               >
                 <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<div>Admin Users Page</div>} />
+                <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/packages" element={<div>Admin Packages Page</div>} />
                 <Route path="/admin/transactions" element={<div>Admin Transactions Page</div>} />
                 <Route path="/admin/referrals" element={<div>Admin Referrals Page</div>} />
