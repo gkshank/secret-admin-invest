@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   Settings,
   Shield,
-  Globe
+  Globe,
+  MessageSquare
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
