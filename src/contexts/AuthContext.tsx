@@ -92,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           text: "Welcome to the Admin Panel",
           confirmButtonColor: "#0070f3",
         });
+        return; // Return here to prevent the error from being thrown
       } else if (username === "user" && password === "password") {
         setUser(mockUser);
         localStorage.setItem("user", JSON.stringify(mockUser));
@@ -101,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           text: "Welcome back!",
           confirmButtonColor: "#0070f3",
         });
+        return; // Return here to prevent the error from being thrown
       } else {
         throw new Error("Invalid credentials");
       }

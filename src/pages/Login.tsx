@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +11,23 @@ import { Eye, EyeOff, Lock, User } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, forgotPassword } = useAuth();
+  const location = useLocation();
+  const { login, forgotPassword, user } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +44,9 @@ const Login = () => {
     setIsLoading(true);
     try {
       await login(username, password);
-      navigate("/dashboard");
+      
+      // Check the user role to determine where to navigate
+      // No need to redirect here as the useEffect will handle it
     } catch (error) {
       console.error("Login failed:", error);
     } finally {
