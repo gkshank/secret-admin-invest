@@ -2,25 +2,105 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Layouts
+import UserLayout from "@/layouts/UserLayout";
+import AdminLayout from "@/layouts/AdminLayout";
+
+// Auth Pages
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+
+// User Pages
+import Dashboard from "@/pages/user/Dashboard";
+
+// Admin Pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+
+// Other Pages
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Redirect root to login */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              
+              {/* Auth Routes - Only accessible when not authenticated */}
+              <Route
+                path="/login"
+                element={
+                  <ProtectedRoute requireAuth={false}>
+                    <Login />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <ProtectedRoute requireAuth={false}>
+                    <Register />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* User Routes - Only accessible when authenticated as a regular user */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <UserLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/investments" element={<div>Investments Page</div>} />
+                <Route path="/transactions" element={<div>Transactions Page</div>} />
+                <Route path="/referrals" element={<div>Referrals Page</div>} />
+                <Route path="/notifications" element={<div>Notifications Page</div>} />
+                <Route path="/support" element={<div>Support Page</div>} />
+                <Route path="/learn" element={<div>Learn Page</div>} />
+                <Route path="/profile" element={<div>Profile Page</div>} />
+                <Route path="/settings" element={<div>Settings Page</div>} />
+              </Route>
+
+              {/* Admin Routes - Only accessible when authenticated as an admin */}
+              <Route
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<div>Admin Users Page</div>} />
+                <Route path="/admin/packages" element={<div>Admin Packages Page</div>} />
+                <Route path="/admin/transactions" element={<div>Admin Transactions Page</div>} />
+                <Route path="/admin/referrals" element={<div>Admin Referrals Page</div>} />
+                <Route path="/admin/support" element={<div>Admin Support Page</div>} />
+                <Route path="/admin/content" element={<div>Admin Content Page</div>} />
+                <Route path="/admin/settings" element={<div>Admin Settings Page</div>} />
+                <Route path="/admin/advanced" element={<div>Admin Advanced Page</div>} />
+              </Route>
+
+              {/* 404 - Not Found */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
