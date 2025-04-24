@@ -1,10 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Package, Plus, Edit2, Trash2 } from "lucide-react";
 import Swal from "sweetalert2";
+import { useToast } from "@/hooks/use-toast";
 
 interface InvestmentPackage {
   id: string;
@@ -19,19 +20,38 @@ interface InvestmentPackage {
 }
 
 const AdminPackages = () => {
-  const [packages, setPackages] = useState<InvestmentPackage[]>([
-    {
-      id: "pkg1",
-      name: "Starter Growth",
-      description: "Perfect for beginners. Low risk with steady returns.",
-      minAmount: 5000,
-      maxAmount: 50000,
-      roi: 7.5,
-      duration: 30,
-      status: "active",
-      riskLevel: "low"
+  const { toast } = useToast();
+  const [packages, setPackages] = useState<InvestmentPackage[]>([]);
+  
+  // Load packages from localStorage on component mount
+  useEffect(() => {
+    const savedPackages = localStorage.getItem('investmentPackages');
+    if (savedPackages) {
+      setPackages(JSON.parse(savedPackages));
+    } else {
+      // Set default package if none exists
+      const defaultPackage = {
+        id: "pkg1",
+        name: "Starter Growth",
+        description: "Perfect for beginners. Low risk with steady returns.",
+        minAmount: 5000,
+        maxAmount: 50000,
+        roi: 7.5,
+        duration: 30,
+        status: "active",
+        riskLevel: "low"
+      };
+      setPackages([defaultPackage]);
+      localStorage.setItem('investmentPackages', JSON.stringify([defaultPackage]));
     }
-  ]);
+  }, []);
+
+  // Save packages to localStorage whenever they change
+  useEffect(() => {
+    if (packages.length > 0) {
+      localStorage.setItem('investmentPackages', JSON.stringify(packages));
+    }
+  }, [packages]);
 
   const handleAddPackage = () => {
     Swal.fire({
@@ -110,13 +130,17 @@ const AdminPackages = () => {
           status: "active",
           ...result.value
         };
-        setPackages([...packages, newPackage]);
         
-        Swal.fire({
-          icon: "success",
+        // Update state with the new package
+        const updatedPackages = [...packages, newPackage];
+        setPackages(updatedPackages);
+        
+        // Save to localStorage
+        localStorage.setItem('investmentPackages', JSON.stringify(updatedPackages));
+        
+        toast({
           title: "Package Added",
-          text: "New investment package has been created successfully.",
-          confirmButtonColor: "#0070f3",
+          description: "New investment package has been created successfully.",
         });
       }
     });
@@ -204,15 +228,19 @@ const AdminPackages = () => {
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        setPackages(packages.map(p => 
+        // Update the package in state
+        const updatedPackages = packages.map(p => 
           p.id === pkg.id ? { ...p, ...result.value } : p
-        ));
+        );
         
-        Swal.fire({
-          icon: "success",
+        setPackages(updatedPackages);
+        
+        // Save to localStorage
+        localStorage.setItem('investmentPackages', JSON.stringify(updatedPackages));
+        
+        toast({
           title: "Package Updated",
-          text: "Investment package has been updated successfully.",
-          confirmButtonColor: "#0070f3",
+          description: "Investment package has been updated successfully."
         });
       }
     });
@@ -229,13 +257,18 @@ const AdminPackages = () => {
       confirmButtonColor: "#dc2626",
     }).then((result) => {
       if (result.isConfirmed) {
-        setPackages(packages.filter(p => p.id !== packageId));
+        // Filter out the package to be deleted
+        const updatedPackages = packages.filter(p => p.id !== packageId);
         
-        Swal.fire({
-          icon: "success",
+        // Update state
+        setPackages(updatedPackages);
+        
+        // Save to localStorage
+        localStorage.setItem('investmentPackages', JSON.stringify(updatedPackages));
+        
+        toast({
           title: "Package Deleted",
-          text: "Investment package has been deleted successfully.",
-          confirmButtonColor: "#0070f3",
+          description: "Investment package has been deleted successfully."
         });
       }
     });

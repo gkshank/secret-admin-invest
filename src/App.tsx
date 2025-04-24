@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,7 +29,14 @@ import AdminSupport from "@/pages/admin/AdminSupport";
 // Other Pages
 import NotFound from "@/pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -77,6 +85,7 @@ const App = () => (
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/packages" element={<AdminPackages />} />
                 <Route path="/admin/support" element={<AdminSupport />} />
+                <Route path="/admin/transactions" element={<div>Admin Transactions Page</div>} />
                 <Route path="/admin/content" element={<div>Admin Content Page</div>} />
                 <Route path="/admin/settings" element={<div>Admin Settings Page</div>} />
                 <Route path="/admin/advanced" element={<div>Admin Advanced Page</div>} />

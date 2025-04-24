@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   User, Users, Search, Filter, MoreHorizontal, 
-  Edit, Trash2, UserPlus, Mail, Shield, AlertTriangle 
+  Edit, Trash2, UserPlus, Mail, Shield, AlertTriangle,
+  Wallet, Key
 } from "lucide-react";
 import { 
   Table, 
@@ -24,9 +25,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Swal from "sweetalert2";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock user data for demonstration
-const mockUsers = [
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  name?: string;
+  role: "user" | "admin";
+  status: "active" | "inactive" | "suspended";
+  balance: number;
+  referralCode: string;
+  referralEarnings: number;
+  createdAt: Date;
+  lastLogin: Date;
+  password?: string;
+}
+
+// Initial mock data
+const initialUsers: User[] = [
   {
     id: "user-1",
     username: "johndoe",
@@ -39,6 +56,7 @@ const mockUsers = [
     referralEarnings: 750,
     createdAt: new Date(2023, 9, 15),
     lastLogin: new Date(2024, 4, 20),
+    password: "password123"
   },
   {
     id: "user-2",
@@ -52,6 +70,7 @@ const mockUsers = [
     referralEarnings: 350,
     createdAt: new Date(2023, 10, 5),
     lastLogin: new Date(2024, 4, 18),
+    password: "password123"
   },
   {
     id: "user-3",
@@ -65,6 +84,7 @@ const mockUsers = [
     referralEarnings: 120,
     createdAt: new Date(2024, 0, 22),
     lastLogin: new Date(2024, 3, 10),
+    password: "password123"
   },
   {
     id: "user-4",
@@ -78,6 +98,7 @@ const mockUsers = [
     referralEarnings: 1200,
     createdAt: new Date(2023, 8, 30),
     lastLogin: new Date(2024, 4, 21),
+    password: "password123"
   },
   {
     id: "user-5",
@@ -91,12 +112,63 @@ const mockUsers = [
     referralEarnings: 0,
     createdAt: new Date(2024, 2, 15),
     lastLogin: new Date(2024, 3, 5),
+    password: "password123"
   },
+  {
+    id: "admin-1",
+    username: "admin",
+    email: "admin@example.com",
+    name: "Admin User",
+    role: "admin",
+    status: "active",
+    balance: 0,
+    referralCode: "ADMIN",
+    referralEarnings: 0,
+    createdAt: new Date(2023, 0, 1),
+    lastLogin: new Date(),
+    password: "admin123"
+  }
 ];
 
 const AdminUsers = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+
+  // Initialize users from localStorage or use mock data
+  useEffect(() => {
+    const savedUsers = localStorage.getItem('users');
+    if (savedUsers) {
+      try {
+        // Parse the stored JSON and convert date strings back to Date objects
+        const parsedUsers = JSON.parse(savedUsers, (key, value) => {
+          if (key === 'createdAt' || key === 'lastLogin') {
+            return new Date(value);
+          }
+          return value;
+        });
+        setUsers(parsedUsers);
+        setFilteredUsers(parsedUsers);
+      } catch (error) {
+        console.error("Error parsing users from localStorage:", error);
+        setDefaultUsers();
+      }
+    } else {
+      setDefaultUsers();
+    }
+  }, []);
+
+  const setDefaultUsers = () => {
+    setUsers(initialUsers);
+    setFilteredUsers(initialUsers);
+    saveUsersToLocalStorage(initialUsers);
+  };
+
+  // Save users to localStorage
+  const saveUsersToLocalStorage = (usersToSave: User[]) => {
+    localStorage.setItem('users', JSON.stringify(usersToSave));
+  };
 
   // Search functionality
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,9 +176,9 @@ const AdminUsers = () => {
     setSearchTerm(term);
     
     if (term.trim() === "") {
-      setFilteredUsers(mockUsers);
+      setFilteredUsers(users);
     } else {
-      const filtered = mockUsers.filter(user => 
+      const filtered = users.filter(user => 
         user.username.toLowerCase().includes(term) ||
         user.email.toLowerCase().includes(term) ||
         user.name?.toLowerCase().includes(term)
@@ -117,7 +189,7 @@ const AdminUsers = () => {
 
   // Handle view user details
   const handleViewUser = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
+    const user = users.find(u => u.id === userId);
     if (user) {
       Swal.fire({
         title: "User Details",
@@ -144,7 +216,7 @@ const AdminUsers = () => {
 
   // Handle edit user
   const handleEditUser = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
+    const user = users.find(u => u.id === userId);
     if (user) {
       Swal.fire({
         title: "Edit User",
@@ -170,32 +242,180 @@ const AdminUsers = () => {
                 <option value="suspended" ${user.status === 'suspended' ? 'selected' : ''}>Suspended</option>
               </select>
             </div>
-            <div class="mb-3">
-              <label for="balance" class="block mb-1 text-sm font-medium">Balance (KES)</label>
-              <input id="balance" type="number" class="w-full px-3 py-2 border rounded-md" value="${user.balance}">
-            </div>
           </form>
         `,
         showCancelButton: true,
         confirmButtonText: "Save Changes",
         confirmButtonColor: "#0070f3",
         preConfirm: () => {
-          // In a real app, you would save these changes to the database
           return {
             username: (document.getElementById('username') as HTMLInputElement).value,
             email: (document.getElementById('email') as HTMLInputElement).value,
             name: (document.getElementById('name') as HTMLInputElement).value,
             status: (document.getElementById('status') as HTMLSelectElement).value,
-            balance: (document.getElementById('balance') as HTMLInputElement).value,
           };
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          Swal.fire({
-            icon: "success",
+          // Update user in state
+          const updatedUsers = users.map(u => {
+            if (u.id === userId) {
+              return {
+                ...u,
+                username: result.value.username,
+                email: result.value.email,
+                name: result.value.name,
+                status: result.value.status as "active" | "inactive" | "suspended",
+              };
+            }
+            return u;
+          });
+          
+          setUsers(updatedUsers);
+          setFilteredUsers(
+            searchTerm ? 
+              updatedUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.name?.toLowerCase().includes(searchTerm)
+              ) : 
+              updatedUsers
+          );
+          
+          // Save to localStorage
+          saveUsersToLocalStorage(updatedUsers);
+          
+          toast({
             title: "User Updated",
-            text: "User details have been updated successfully.",
-            confirmButtonColor: "#0070f3",
+            description: "User details have been updated successfully."
+          });
+        }
+      });
+    }
+  };
+
+  // Handle change user password
+  const handleChangePassword = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      Swal.fire({
+        title: "Change Password",
+        html: `
+          <form id="change-password-form" class="text-left">
+            <div class="mb-3">
+              <label for="newPassword" class="block mb-1 text-sm font-medium">New Password</label>
+              <input id="newPassword" type="password" class="w-full px-3 py-2 border rounded-md" placeholder="Enter new password">
+            </div>
+            <div class="mb-3">
+              <label for="confirmPassword" class="block mb-1 text-sm font-medium">Confirm Password</label>
+              <input id="confirmPassword" type="password" class="w-full px-3 py-2 border rounded-md" placeholder="Confirm new password">
+            </div>
+          </form>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Change Password",
+        confirmButtonColor: "#0070f3",
+        preConfirm: () => {
+          const newPassword = (document.getElementById('newPassword') as HTMLInputElement).value;
+          const confirmPassword = (document.getElementById('confirmPassword') as HTMLInputElement).value;
+          
+          if (!newPassword || newPassword.length < 6) {
+            Swal.showValidationMessage("Password must be at least 6 characters");
+            return false;
+          }
+          
+          if (newPassword !== confirmPassword) {
+            Swal.showValidationMessage("Passwords do not match");
+            return false;
+          }
+          
+          return { newPassword };
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Update user password in state
+          const updatedUsers = users.map(u => {
+            if (u.id === userId) {
+              return { ...u, password: result.value.newPassword };
+            }
+            return u;
+          });
+          
+          setUsers(updatedUsers);
+          // No need to update filtered users as password isn't used for filtering
+          
+          // Save to localStorage
+          saveUsersToLocalStorage(updatedUsers);
+          
+          toast({
+            title: "Password Changed",
+            description: "User password has been updated successfully."
+          });
+        }
+      });
+    }
+  };
+
+  // Handle add balance
+  const handleAddBalance = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      Swal.fire({
+        title: "Add Balance",
+        html: `
+          <form id="add-balance-form" class="text-left">
+            <div class="mb-3">
+              <label for="amount" class="block mb-1 text-sm font-medium">Amount (KES)</label>
+              <input id="amount" type="number" min="1" class="w-full px-3 py-2 border rounded-md" placeholder="Enter amount">
+            </div>
+            <div class="mb-3">
+              <label for="notes" class="block mb-1 text-sm font-medium">Notes (Optional)</label>
+              <textarea id="notes" class="w-full px-3 py-2 border rounded-md" placeholder="Add notes"></textarea>
+            </div>
+          </form>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Add Balance",
+        confirmButtonColor: "#0070f3",
+        preConfirm: () => {
+          const amount = Number((document.getElementById('amount') as HTMLInputElement).value);
+          const notes = (document.getElementById('notes') as HTMLTextAreaElement).value;
+          
+          if (!amount || amount <= 0) {
+            Swal.showValidationMessage("Please enter a valid amount");
+            return false;
+          }
+          
+          return { amount, notes };
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Update user balance in state
+          const updatedUsers = users.map(u => {
+            if (u.id === userId) {
+              const newBalance = u.balance + result.value.amount;
+              return { ...u, balance: newBalance };
+            }
+            return u;
+          });
+          
+          setUsers(updatedUsers);
+          setFilteredUsers(
+            searchTerm ? 
+              updatedUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.name?.toLowerCase().includes(searchTerm)
+              ) : 
+              updatedUsers
+          );
+          
+          // Save to localStorage
+          saveUsersToLocalStorage(updatedUsers);
+          
+          toast({
+            title: "Balance Added",
+            description: `KES ${result.value.amount.toLocaleString()} has been added to the user's account.`
           });
         }
       });
@@ -204,8 +424,18 @@ const AdminUsers = () => {
 
   // Handle delete user
   const handleDeleteUser = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
+    const user = users.find(u => u.id === userId);
     if (user) {
+      // Don't allow deleting the admin user
+      if (user.role === "admin") {
+        toast({
+          variant: "destructive",
+          title: "Cannot Delete Admin",
+          description: "Admin users cannot be deleted from the system."
+        });
+        return;
+      }
+
       Swal.fire({
         title: "Delete User",
         text: `Are you sure you want to delete ${user.username}?`,
@@ -216,14 +446,26 @@ const AdminUsers = () => {
         confirmButtonColor: "#dc2626",
       }).then((result) => {
         if (result.isConfirmed) {
-          // In a real app, you would delete the user from the database
-          setFilteredUsers(filteredUsers.filter(u => u.id !== userId));
+          // Delete user from state
+          const updatedUsers = users.filter(u => u.id !== userId);
           
-          Swal.fire({
-            icon: "success",
+          setUsers(updatedUsers);
+          setFilteredUsers(
+            searchTerm ? 
+              updatedUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.name?.toLowerCase().includes(searchTerm)
+              ) : 
+              updatedUsers
+          );
+          
+          // Save to localStorage
+          saveUsersToLocalStorage(updatedUsers);
+          
+          toast({
             title: "User Deleted",
-            text: "User has been deleted successfully.",
-            confirmButtonColor: "#0070f3",
+            description: "User has been deleted successfully."
           });
         }
       });
@@ -252,6 +494,10 @@ const AdminUsers = () => {
             <label for="password" class="block mb-1 text-sm font-medium">Password</label>
             <input id="password" type="password" class="w-full px-3 py-2 border rounded-md" placeholder="Enter password">
           </div>
+          <div class="mb-3">
+            <label for="initialBalance" class="block mb-1 text-sm font-medium">Initial Balance (KES)</label>
+            <input id="initialBalance" type="number" class="w-full px-3 py-2 border rounded-md" placeholder="0" value="0">
+          </div>
         </form>
       `,
       showCancelButton: true,
@@ -261,9 +507,15 @@ const AdminUsers = () => {
         // Validate inputs
         const username = (document.getElementById('username') as HTMLInputElement).value;
         const email = (document.getElementById('email') as HTMLInputElement).value;
+        const password = (document.getElementById('password') as HTMLInputElement).value;
         
         if (!username || !email) {
           Swal.showValidationMessage("Username and email are required");
+          return false;
+        }
+        
+        if (password.length < 6) {
+          Swal.showValidationMessage("Password must be at least 6 characters");
           return false;
         }
         
@@ -271,33 +523,48 @@ const AdminUsers = () => {
           username,
           email,
           name: (document.getElementById('name') as HTMLInputElement).value,
-          password: (document.getElementById('password') as HTMLInputElement).value,
+          password,
+          initialBalance: Number((document.getElementById('initialBalance') as HTMLInputElement).value) || 0,
         };
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        // In a real app, you would add the user to the database
-        const newUser = {
+        // Create new user
+        const newUser: User = {
           id: `user-${Date.now()}`,
           username: result.value.username,
           email: result.value.email,
           name: result.value.name,
           role: "user",
           status: "active",
-          balance: 0,
+          balance: result.value.initialBalance,
           referralCode: `FYS-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
           referralEarnings: 0,
           createdAt: new Date(),
           lastLogin: new Date(),
+          password: result.value.password
         };
         
-        setFilteredUsers([newUser, ...filteredUsers]);
+        // Add user to state
+        const updatedUsers = [newUser, ...users];
         
-        Swal.fire({
-          icon: "success",
+        setUsers(updatedUsers);
+        setFilteredUsers(
+          searchTerm ? 
+            updatedUsers.filter(user => 
+              user.username.toLowerCase().includes(searchTerm) ||
+              user.email.toLowerCase().includes(searchTerm) ||
+              user.name?.toLowerCase().includes(searchTerm)
+            ) : 
+            updatedUsers
+        );
+        
+        // Save to localStorage
+        saveUsersToLocalStorage(updatedUsers);
+        
+        toast({
           title: "User Created",
-          text: "New user has been created successfully.",
-          confirmButtonColor: "#0070f3",
+          description: "New user has been created successfully."
         });
       }
     });
@@ -335,11 +602,9 @@ const AdminUsers = () => {
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          icon: "success",
+        toast({
           title: "Emails Sent",
-          text: `Emails have been queued for delivery to ${filteredUsers.length} users.`,
-          confirmButtonColor: "#0070f3",
+          description: `Emails have been queued for delivery to ${filteredUsers.length} users.`
         });
       }
     });
@@ -455,16 +720,28 @@ const AdminUsers = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => handleViewUser(user.id)}>
+                              <User className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEditUser(user.id)}>
+                              <Edit className="h-4 w-4 mr-2" />
                               Edit User
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleChangePassword(user.id)}>
+                              <Key className="h-4 w-4 mr-2" />
+                              Change Password
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAddBalance(user.id)}>
+                              <Wallet className="h-4 w-4 mr-2" />
+                              Add Balance
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="text-red-600" 
                               onClick={() => handleDeleteUser(user.id)}
+                              disabled={user.role === "admin"}
                             >
+                              <Trash2 className="h-4 w-4 mr-2" />
                               Delete User
                             </DropdownMenuItem>
                           </DropdownMenuContent>
